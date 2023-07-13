@@ -21,8 +21,12 @@ class VkTools:
         except ApiError as e:
             print(f'Ошибка при отправке сообщения: {e}')
 
+
     def _bdate_toyear(self, bdate):
-        user_year = bdate.split('.')[2]
+        bdate_parts = bdate.split('.')
+        if len(bdate_parts) < 3:
+            return None
+        user_year = bdate_parts[2]
         now = datetime.now().year
         return now - int(user_year)
 
@@ -31,7 +35,7 @@ class VkTools:
 
     def send_message_and_wait_for_reply(self, user_id, message):
         self.send_message(user_id, message)
-        timeout = 100  # 30 seconds (0.1 * 300)
+        timeout = 300  # 30 seconds (0.1 * 300)
         while timeout > 0:
             time.sleep(0.1)  # wait for reply
             timeout -= 1
@@ -88,7 +92,16 @@ class VkTools:
             result['year'] = self.send_message_and_wait_for_reply(user_id,
                                                                   'Дата рождения ваша в формате день.месяц.год: ')
         if result['relation'] is None:
-            result['relation'] = self.send_message_and_wait_for_reply(user_id, 'Как у вас с семейным положением?: ')
+            result['relation'] = self.send_message_and_wait_for_reply(user_id, 'Как у вас с семейным положением? (1 — не женат/не замужем,'
+                                                                                                                   ' 2 — есть друг/есть подруга,    '
+                                                                                                                  ' 3 — помолвлен/помолвлена, '
+                                                                                                                   '   4 — женат/замужем, '
+                                                                                                                    '5 — всё сложно, '
+                                                                                                                    '6 — в активном поиске,'
+                                                                                                                   '  7 — влюблён/влюблена, '
+                                                                                                                   '8 — в гражданском браке,'
+                                                                                                                   '   0 — не указано,: ')
+
 
         return result
 
@@ -103,9 +116,8 @@ class VkTools:
                                           'hometown': params['city'],
                                           'sex': 1 if params['sex'] == 2 else 2,
                                           'has_photo': True,
-                                          'age_from': params['year'] - 10,
-
-                                          'age_to': params['year'] + 3,
+                                          'age_from': int(params['year']) - 5,  # <- здесь
+                                          'age_to': int(params['year']) + 7,  # и здесь
                                       })
 
 
@@ -155,7 +167,7 @@ class VkTools:
 
 
 if __name__ == '__main__':
-    user_id = 1456975  # this is my user_id from VK
+    user_id = 111599762  # this is my user_id from VK
     tools = VkTools(acces_token)
     params = tools.get_profile_info(user_id)  # получили параметры пользователя
     worksheets = tools.search_worksheet(params,
